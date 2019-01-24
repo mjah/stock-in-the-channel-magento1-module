@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<config>
+    <api>
+        <resources>
+            <sinchimport_soap translate="title" module="sinchimport">
+            <title>Bintime Sinchimport Soap</title>
+            <model>sinchimport/api</model>
+                <methods>
+
+                    <test translate="title" module="sinchimport">
+                        <title>Bintime Sinchimport Soap method "test"</title>
+                        <method>test</method>
+                    </test>   
+
+                    <run_Full_Import>
+                        <title>Bintime Sinchimport Soap method "run_Full_Import"</title>
+                        <method>run_full_import</method>
+                    </run_Full_Import>
+
+                    <run_Price_Stock_Import>
+                        <title>Bintime Sinchimport Soap method "run_Price_Stock_Import"</title>
+                        <method>run_ps_import</method>
+                    </run_Price_Stock_Import>
+
+                    <get_Import_Status>
+                        <title>Bintime Sinchimport Soap method "get_Import_Status"</title>
+                        <method>get_import_status</method>
+                    </get_Import_Status>
+
+                </methods>
+            </sinchimport_soap>
+        </resources>
+    </api>
+</config> 

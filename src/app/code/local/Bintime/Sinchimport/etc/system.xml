@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+        <sections>
+			<sinchimport_root translate="label" module="catalog">
+			<class>separator-top</class>
+            <label>Stock in the Channel</label>
+            <tab>catalog</tab>
+            <frontend_type>text</frontend_type>
+            <sort_order>200</sort_order>
+            <show_in_default>1</show_in_default>
+            <show_in_website>1</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                <sinch_ftp translate="label">
+                    <label>FTP Login Details</label>
+                    <frontend_type>text</frontend_type>
+                    <comment>Get these details from Stock in the Channel for the pricelist you want this store to use. This is not your Stock in the Channel username and password</comment>
+                    <sort_order>50</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                    	<ftp_server translate="label">
+				    		<label>FTP Server</label>
+	                        	<frontend_type>select</frontend_type>
+						<source_model>sinchimport/system_config_ServerList</source_model>
+			            	<sort_order>10</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>
+                    	</ftp_server>
+                    	<login translate="label">
+				    		<label>FTP User Name</label>
+	                        <frontend_type>text</frontend_type>
+			            	<sort_order>15</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>
+                    	</login>
+                    	<password translate="label">
+				    		<label>FTP Password</label>
+	                        <frontend_type>text</frontend_type>
+			            	<sort_order>20</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>
+                    	</password>
+<!--
+                        <field_terminated_char>
+                            <label>Field terminated char</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </field_terminated_char>
+-->
+			<replace_category>
+			    		<label>Merge or Overwrite Categories</label>
+		                        <frontend_type>select</frontend_type>
+		                        <source_model>sinchimport/system_config_CatRewrite</source_model>
+			            	<sort_order>30</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>		
+			</replace_category>
+			<replace_products>
+			    		<label>Merge or Overwrite Products</label>
+		                        <frontend_type>select</frontend_type>
+		                        <source_model>sinchimport/system_config_ProdRewrite</source_model>
+			            	<sort_order>40</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>		
+			</replace_products>
+<!--
+            <price_breaks translate="label">
+				    		<label>Inser price breaks (insert ranges like 0-10; 10-100; etc.)</label>
+	                        <frontend_type>textarea</frontend_type>
+			            	<sort_order>40</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>
+            </price_breaks>
+-->
+                     </fields>
+                </sinch_ftp>
+<!--
+                <sinch_cron translate="label">
+                    <label>Schedule Import Time</label>
+                    <frontend_type>text</frontend_type>
+                    <comment>Choose the time you want the file to be imported to your Magento store, bear in mind some distributors do not publish their days prices until quite late, so set 8 AM as the earliest</comment>
+                    <sort_order>100</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>                           
+                    	<sinch_cron_time translate="label">
+			    		<label>Schedule Import Time</label>
+	                        <frontend_type>select</frontend_type>
+	                        <source_model>sinchimport/system_config_subscription</source_model>
+			            	<sort_order>10</sort_order>
+			            	<show_in_default>1</show_in_default>
+			            	<show_in_website>1</show_in_website>
+			            	<show_in_store>1</show_in_store>
+                    	</sinch_cron_time>
+                    </fields>
+                </sinch_cron>
+-->
+                <sinch_import_fullstatus translate="label">
+                    <label>Import Full Catalogue</label>
+                    <frontend_type>text</frontend_type>
+                    <comment>An import of 100000 products will take approximately 1 hour.Larger catalogues will take substantially longer.</comment>
+                    <sort_order>150</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <start_sinch_import translate="label">
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>sinchimport/startimportbutton</frontend_model>                            
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </start_sinch_import>
+                    </fields>
+               </sinch_import_fullstatus>
+							 <sinch_backup_catalog translate="label">
+                    <label>Backup Categories and Products Ids</label>
+                    <frontend_type>text</frontend_type>
+                    <comment>Backup current Ids of products and categories to re-use when importing in overwrite mode.</comment>
+                    <sort_order>160</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <start_sinch_import translate="label">
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>sinchimport/backupbutton</frontend_model>                            
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </start_sinch_import>
+                    </fields>
+               </sinch_backup_catalog>
+               <sinch_import_stockpricestatus translate="label">
+                    <label>Import Stock &amp; Prices</label>
+                    <frontend_type>text</frontend_type>
+                    <comment>This will import stock and prices ONLY. This process should not take longer 5 minutes.</comment>
+                    <sort_order>160</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <start_sinch_import translate="label">
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>sinchimport/startstockpriceimportbutton</frontend_model>                            
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </start_sinch_import>
+                    </fields>
+              </sinch_import_stockpricestatus>
+
+              <sinch_import_history>
+                    <label>Import History</label>
+                    <frontend_type>text</frontend_type>
+                    <comment></comment>
+                    <sort_order>170</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <sinch_import_hist translate="label">
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>sinchimport/importhistory</frontend_model>
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </sinch_import_hist>
+                    </fields>
+                </sinch_import_history>
+
+
+			<sinch_import_environment>
+				<label>Check Server Configuration</label>
+				<frontend_type>text</frontend_type>
+				<comment>In order for this extension to work, your server needs to be configured in a particular way and have sufficient memory.</comment>
+				<sort_order>20</sort_order>
+				<show_in_default>1</show_in_default>
+				<show_in_website>1</show_in_website>
+				<show_in_store>1</show_in_store>
+				<fields>
+					<sinch_import_env translate="label">
+						<!--label>Your Stock In The Channel Environment Check Summary</label-->
+						<frontend_model>sinchimport/importenvironment</frontend_model>
+						<sort_order>4</sort_order>
+						<show_in_default>1</show_in_default>
+						<show_in_website>1</show_in_website>
+						<show_in_store>1</show_in_store>
+					</sinch_import_env>
+				</fields>
+			</sinch_import_environment>
+
+
+            </groups>
+			</sinchimport_root>
+        </sections>
+</config>

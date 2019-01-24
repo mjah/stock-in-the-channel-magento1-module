@@ -1,0 +1,363 @@
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *
+ * @category   design_default
+ * @package    Mage
+ * @copyright  Copyright (c) 2008 Irubin Consulting Inc. DBA Varien (http://www.varien.com)
+ * @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+
+/**
+ * Product view template
+ *
+ * @see Mage_Catalog_Block_Product_View
+ * @see Mage_Review_Block_Product_View
+ */
+?>
+<?php
+    $_helper = $this->helper('catalog/output');
+    $_product = $this->getProduct();
+    $_catIds = $_product->getCategoryIds(); 
+    $_catId = $_catIds[0];		
+
+	$_productDescriptionHelper = $this->helper('sinchimport/getdata')->getProductDescription($_product);
+	$message = $_productDescriptionHelper->getError();
+	if ($message){
+		$this->getMessagesBlock()->addError($_productDescriptionHelper->getError());
+	}
+    $specificationArray = $_productDescriptionHelper->getProductDescriptionList();
+    $sinchSpecification=$_productDescriptionHelper->getProductSpecifications();  	
+	$relatedProductsList = $_productDescriptionHelper->getRelatedProducts();
+//	echo "related= ".$_productDescriptionHelper->getVendor();
+?>
+<script type="text/javascript">
+    var optionsPrice = new Product.OptionsPrice(<?php echo $this->getJsonConfig() ?>);
+</script>
+<div id="messages_product_view"><?php echo $this->getMessagesBlock()->getGroupedHtml() ?></div>
+<div style="display:none"><?php $message=$_productDescriptionHelper->hasSystemError(); if ($message){ echo $message; } ?></div>
+<div class="product-info-box product-view">
+    <div class="product-essential">
+    <form action="<?php echo $this->getAddToCartUrl($_product) ?>" method="post" id="product_addtocart_form"<?php if($_product->getOptions()): ?> enctype="multipart/form-data"<?php endif; ?>>
+
+        <div class="product-img-box">
+            <?php echo $this->getChildHtml('media'); ?>
+        </div>
+
+        <div class="product-shop">
+            <?php if (!$_productDescriptionHelper->hasError()) : ?>
+                <h3 class="product-name"><?php echo $_productDescriptionHelper->getProductName()?></h3>
+            <?php else :?>
+                <h1><?php echo $_helper->productAttribute($_product, $_product->getName(), 'name')?></h1>
+            <?php endif;?>
+            <?php if ($this->canEmailToFriend()): ?>
+                <a href="<?php echo $this->helper('catalog/product')->getEmailToFriendUrl($_product) ?>"><?php echo $this->__('Email to a Friend') ?></a><br />
+            <?php endif; ?>
+
+            <?php echo $this->getReviewsSummaryHtml($_product, false, true)?>
+
+            <fieldset class="no-display">
+              <input type="hidden" name="product" value="<?php echo $_product->getId() ?>" />
+              <input type="hidden" name="related_product" id="related-products-field" value="" />
+            </fieldset>
+            <?php  if (!$_productDescriptionHelper->hasError()):?>
+            <div><b><?php echo $this->helper('sinchimport/getdata')->__('Brand:')?></b><?php echo $_productDescriptionHelper->getVendor();?></div>
+            <div><b><?php echo $this->helper('sinchimport/getdata')->__('Product code:')?></b><?php echo $_productDescriptionHelper->getMPN();?></div>
+            <div><b><?php echo $this->helper('sinchimport/getdata')->__('EAN/UPC code:')?></b><?php echo $_productDescriptionHelper->getEAN();?></div>
+            <div><b><?php echo $this->helper('sinchimport/getdata')->__('Category:')?></b><?php echo Mage::getModel('catalog/category')->load($_catId)->getName()?></div>
+			<?php endif;?>
+            <?php echo $this->getChildHtml('alert_urls') ?>
+            <?php echo $this->getChildHtml('product_type_data') ?>
+            <?php echo $this->getTierPriceHtml() ?>
+
+            <?php if (!$this->hasOptions()):?>
+                <div class="add-to-holder">
+                    <?php if($_product->isSaleable()): ?>
+                        <?php echo $this->getChildHtml('addtocart') ?>
+                        <?php if( $this->helper('wishlist')->isAllow() || $_compareUrl=$this->helper('catalog/product_compare')->getAddUrl($_product)): ?>
+                            <span class="add-or"><?php echo $this->__('OR') ?></span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    <?php echo $this->getChildHtml('addto') ?>
+                </div>
+            <?php else:?>
+                <?php echo $this->getChildHtml('addto') ?>
+            <?php endif; ?>
+            
+            <?php if ($_product->getShortDescription() && $_productDescriptionHelper->hasError()):?>
+                <div class="short-description">
+                    <h2><?php echo $this->__('Quick Overview') ?></h2>
+                    <div class="std"><?php echo $_helper->productAttribute($_product, nl2br($_product->getShortDescription()), 'short_description') ?></div>
+                </div>
+            <?php else :?>
+            	<div class="divider"></div>
+            <?php endif;?>
+            
+              
+            <?php echo $this->getChildHtml('other');?>
+            <?php if ($_product->isSaleable() && $this->hasOptions()):?>
+                <?php echo $this->getChildChildHtml('container1', '', true, true) ?>
+            <?php endif;?>
+
+        </div>
+        <div class="clear"></div>
+        <?php if ($_product->isSaleable() && $this->hasOptions()):?>
+            <?php echo $this->getChildChildHtml('container2', '', true, true) ?>
+        <?php endif;?>
+    </form>
+    <script type="text/javascript">
+            var productAddToCartForm = new VarienForm('product_addtocart_form');
+            productAddToCartForm.submit = function(){
+                    if (this.validator.validate()) {
+                            this.form.submit();
+                    }
+            }.bind(productAddToCartForm);
+
+            function changeTab(id){
+				for(var i=0;i<4;i++){
+					var tab_cont = (document.getElementById) ? document.getElementById("tab_cont_"+i) : eval('document.all["tab_cont_'+i+'"]');
+					var tab = (document.getElementById) ? document.getElementById("tab_"+i) : eval('document.all["tab_'+i+'"]');
+					
+					if (tab_cont!=null && tab!=null) {
+						if(i==id){
+							tab_cont.style.display="";
+							tab.className="prod_doc_tab_div_sel";
+						} else {
+							tab_cont.style.display="none";
+							tab.className="prod_doc_tab_div";
+						}
+					}
+				}
+			}
+    </script>
+    </div>
+    <?php if (!$_productDescriptionHelper->hasError()) : ?>
+	    <div class="description_b">
+	    	<div class="short_product_description"><?php echo $_productDescriptionHelper->getShortProductDescription() ?></div>
+	                  <?php 
+	              	if (strlen($_productDescriptionHelper->getFullProductDescription())>450){
+		              	$firstPart = str_replace("\\n", "<br>", substr($_productDescriptionHelper->getFullProductDescription(), 0, 400));
+		              	$space = strrpos($firstPart, " ");
+		              	$dot = strrpos($firstPart, ".");
+		              	$column = strrpos($firstPart, ",");
+		              	$spanTagStart = strrpos($firstPart, "<span");
+		              	$spanTagEND = strrpos($firstPart, "</span>");
+		              	
+		              	if ($space-5>$dot && $space-5>$column){
+		              		$firstPart = substr($firstPart, 0, $space);
+		              	}
+		              	else{
+		              		$firstPart = $column > $dot ? substr($firstPart, 0, $column) : substr($firstPart, 0, $dot);
+		              	}
+		              	if ((int)$spanTagEND<$spanTagStart){
+		              		$firstPart = substr($firstPart, 0, $spanTagStart);
+		              	}
+		              	
+	              	}
+	              
+	              ?>
+				<div class="product_description">
+				 <?php if (isset($firstPart)):?>
+				 	<span id="more_link"><?php echo $firstPart." "?>... <a class="more_link" href="javascript: showMore();"><?php echo htmlentities(' More>>>')?></a></span>
+				 	<span id="more_info" style="display: none;"><?php echo str_replace("\\n", "<br>", $_productDescriptionHelper->getFullProductDescription());?><a class="more_link"  href="javascript: hideMore();"><?php echo htmlentities(' <<<Less')?></a></span>
+				 <?php else: ?>
+				 	<span><?php echo str_replace("\\n", "<br>", $_productDescriptionHelper->getFullProductDescription());?></span>
+				 <?php endif?>
+				 </div >
+			</div>
+		<?php endif;?>
+    	<div class="product-collateral">
+    	<?php if ($_productDescriptionHelper->hasError()) :?>
+    		<?php echo $this->getChildHtml('description') ?>
+    	<?php else :
+	 	$tab_class0=$tab_class1=$tab_class2=$tab_class3='prod_doc_tab_div';
+		$data_tab_style0=$data_tab_style1=$data_tab_style2=$data_tab_style3="display:none";
+		if($sinchSpecification || $sinchSpecification!=''){
+			$tab_class0='prod_doc_tab_div_sel';
+			$data_tab_style0='';
+		}elseif(!empty($specificationArray)){
+			$tab_class1='prod_doc_tab_div_sel';
+			$data_tab_style1='';
+		}elseif($_catId && array_key_exists($_catId, $relatedProductsList)){
+			$tab_class2='prod_doc_tab_div_sel';
+                        $data_tab_style2='';
+		}elseif(!empty($relatedProductsList)){
+			$tab_class3='prod_doc_tab_div_sel';
+                        $data_tab_style3='';	
+		} 
+	?>
+		<? if(false): ?>
+	        <table cellspacing="0" cellpadding="0" width="100%">
+				<tr>
+					<td>
+						<table cellspacing="0" cellpadding="0" class="prod_doc_tabs_row">
+						<tr>
+							<td class="prod_doc_tabs_space">&nbsp;</td>
+						 	<?php if ($sinchSpecification || $sinchSpecification!=''):?>	
+						        <td class="prod_doc_tab"><div id="tab_0" class="<?php echo $tab_class0 ?>" onclick="changeTab(0)"><?php echo $this->helper('sinchimport/getdata')->__('Specification') ?></div></td>
+							<?php endif?>
+							<?php if (!empty($specificationArray)):?>
+							<td class="prod_doc_tab"><div id="tab_1" class="<?php echo $tab_class1 ?>" onclick="changeTab(1)"><?php echo $this->helper('sinchimport/getdata')->__('Star features') ?></div></td>
+							<?php endif?>
+							<?php if ($_catId && array_key_exists($_catId, $relatedProductsList)):?>
+								<td class="prod_doc_tab"><div id="tab_2" class="prod_doc_tab_div" onclick="changeTab(2)"><?php echo $this->helper('sinchimport/getdata')->__('Alternatives') ?></div></td>
+							<?php endif?>
+							<?php if (!empty($relatedProductsList)):?>
+							<td class="prod_doc_tab"><div id="tab_3" class="prod_doc_tab_div" onclick="changeTab(3)"><?php echo $this->helper('sinchimport/getdata')->__('Options') ?></div></td>
+							<?php endif?>
+							<td class="prod_doc_tabs_space" style="width:auto!important">&nbsp;</td>
+						</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<table cellspacing="0" cellpadding="2" class="prod_doc_content">
+						<tr>
+							<td class="prod_doc_content_cell">
+								<!-- ZERO TAB's CONTENT (VISIBLE BY DEFAULT) -->
+								<table id="tab_cont_0" cellspacing="6" cellpadding="0" width="100%" style="<?php echo $data_tab_style0; ?>">
+								<tr>
+									<td width="50%" valign="top">
+										<table cellspacing="0" cellpadding="2" class="prod_doc_table">
+										 <tr><td>
+											<?php echo $sinchSpecification; ?> 
+										     </td></tr>	
+										</table>
+									</td>
+								</tr>
+								</table>
+					
+							<!-- FIRST TAB's CONTENT (VISIBLE BY DEFAULT) -->
+								<table id="tab_cont_1" cellspacing="6" cellpadding="0" width="100%" style="<?php echo $data_tab_style1; ?>">
+								<tr>
+									<td width="50%" valign="top">
+										<table cellspacing="0" cellpadding="2" class="prod_doc_table">
+
+															<?php foreach($specificationArray as $key => $value):?>
+															<tr>
+																<td colspan="2" class="prod_doc_item_head"><?php echo $key?></td>
+																<td class="prod_doc_item_descr"><?php if($value == "Y"){
+																	echo '<img border="0" alt="" src="http://prf.icecat.biz/imgs/yes.gif"/>';
+																}
+																else if ($value == "N"){
+																	echo '<img border="0" alt="" src="http://prf.icecat.biz/imgs/no.gif"/>';
+																}
+																else{
+																	echo str_replace("\\n", "<br>",$value);
+																}
+																?></td>
+															</tr>
+															<?php endforeach;?>
+										</table>
+									</td>
+								</tr>
+								</table>
+								<!-- SECOND TAB's CONTENT (HIDDEN BY DEFAULT) -->
+								<table id="tab_cont_2" cellspacing="6" cellpadding="0" width="100%" style="<?php echo $data_tab_style2; ?>">
+								<tr>
+									<td>
+										<table cellspacing="1" cellpadding="5" class="prod_alt_table" width="100%" >
+										<tr>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Brand') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Image') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Article code') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Product name') ?></td>
+										</tr>
+										<?php if ($_catId && array_key_exists($_catId, $relatedProductsList)):?>
+											<?php foreach($relatedProductsList[$_catId] as $product):?>
+												<tr>
+														<?php if($product['supplier_thumb']&&($product['supplier_thumb']!='')): ?>			
+														<td><img src="<?php echo $product['supplier_thumb']?>" /></td>
+														<?php else :?>
+														<td><?php echo  $product['supplier_name']?></td>	
+														<?php endif ?>			
+													<td><a href="<?php echo $product['url']?>"><img src="<?php echo $product['thumb']?>" /></a></td>
+													<td><?php echo $product['mpn']?></td>
+													<td><a href="<?php echo $product['url']?>" class="prod_link_small"><?php echo $product['name']?></a></td>
+												</tr>
+											<?php endforeach?>
+										<?php else: ?>
+												<tr><td></>No Alternative proposals for Current product avaible</td></tr>
+										<?php endif?>
+										</table>
+									</td>
+								</tr>
+								</table>
+								<!-- THIRD TAB's CONTENT (HIDDEN BY DEFAULT) -->
+								<table id="tab_cont_3" cellspacing="6" cellpadding="0" width="100%" style="<?php echo $data_tab_style3; ?>">
+								<tr>
+									<td>
+									
+										<table cellspacing="1" cellpadding="5" width="100%"  class="prod_alt_table">
+										<tr>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Brand') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Image') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Article code') ?></td>
+											<td class="prod_doc_block_head"><?php echo $this->helper('sinchimport/getdata')->__('Product name') ?></td>
+										</tr>
+										<?php if (!empty($relatedProductsList)):?>
+											<?php foreach($relatedProductsList as $categoryId => $productsArray):?>
+												<?php if ($categoryId == $_catId){
+													continue;
+												}?>
+											<?php if (!is_string($categoryId)):?>
+												<tr>
+													<td class="prod_doc_item_head2" colspan="4"><?php echo is_string($categoryId)? '' : Mage::getSingleton('catalog/category')->load($categoryId)->getName() ?></td>
+													
+												</tr>
+											<?php endif?>
+												<?php foreach($productsArray as $product):?>
+													<tr>
+														<?php if($product['supplier_thumb']&&($product['supplier_thumb']!='')): ?>			
+														<td><img src="<?php echo $product['supplier_thumb']?>" /></td>
+														<?php else :?>
+														<td><?php echo $product['supplier_name']?></td>	
+														<?php endif ?>			
+														<td><a href="<?php echo $product['url']?>"><img src="<?php echo $product['thumb']?>" /></a></td>
+														<td><?php echo $product['mpn']?></td>
+														<td><a href="<?php echo $product['url']?>" class="prod_link_small"><?php echo $product['name']?></a></td>
+													</tr>
+												<?php endforeach ?>
+											<?php endforeach ?>
+										<?php else: ?>
+												<tr><td></>No Related proposals for Current product avaible</td></tr>
+										<?php endif?>
+										</table>
+									</td>
+								</tr>
+								</table>
+								<!-- EOF -->
+							</td>
+						</tr>
+						</table>
+				<?php endif; ?>			
+					</td>
+				</tr>
+			</table>
+		<?php endif;?>
+        <?php if ($_additional = $this->getChildHtml('additional')):?>
+            <div class="collateral-box">
+                <?php echo $_additional ?>
+            </div>
+        <?php endif;?>
+        <?php echo $this->getChildHtml('upsell_products') ?>
+        <?php echo $this->getChildHtml('product_additional_data') ?>
+    </div>
+</div>
