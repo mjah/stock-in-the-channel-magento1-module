@@ -19,7 +19,7 @@ class Bintime_Sinchimport_AjaxController extends Mage_Adminhtml_Controller_Actio
     public function indexAction() {
 	    $sinch=Mage::getModel('sinchimport/sinch');
         $this->_logFile = "Sinch.log";
-        Mage::log("Start Sinch import", null, $this->_logFile);
+        Mage::log("Start Sinch import [AjaxController.php]", null, $this->_logFile);
         $this->getResponse()->appendBody("Start import <br>");
         $dir = dirname(__FILE__);
         $php_run_string_array = explode(';', $sinch->php_run_strings);

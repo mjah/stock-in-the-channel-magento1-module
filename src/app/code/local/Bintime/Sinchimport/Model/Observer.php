@@ -40,7 +40,10 @@ class Bintime_Sinchimport_Model_Observer extends Mage_Index_Model_Resource_Abstr
             return $this;
         }
 
-        $sql = "UPDATE {$obs->getTable()} as t2 INNER JOIN catalog_product_entity AS e SET t2.store_product_id = e.store_product_id, t2.sinch_product_id = e.sinch_product_id where t2.entity_id = e.entity_id";
+        # Moe : Changed catalog_product_entity to magento gettablename
+        # Reason: Add support for tables with prefix
+        $catalogProductEntityTable = Mage::getSingleton('core/resource')->getTableName('catalog_product_entity');
+        $sql = "UPDATE {$obs->getTable()} as t2 INNER JOIN " . $catalogProductEntityTable . " AS e SET t2.store_product_id = e.store_product_id, t2.sinch_product_id = e.sinch_product_id where t2.entity_id = e.entity_id";
         $adapter->query($sql);
     }
 

@@ -15,15 +15,17 @@ class Bintime_Sinchimport_Block_Layer_View extends Mage_Catalog_Block_Layer_View
         //получение списка фич, по которым строися навигация
         $filterableFeatures = $this->getLayer()->getFilterableFeatures();
         $filterBlockName = 'sinchimport/layer_filter_feature'; //block
-        foreach ($filterableFeatures as $feature) {
-        	$this->filterableFeatures[] = $feature;
-            $featureBlock = $this->getLayout()->createBlock($filterBlockName)
-                    ->setLayer($this->getLayer())
-                    ->setAttributeModel($feature)
-                    ->init();
-            $this->setChild('feature_' . $feature['feature_id'] . '_filter',
-                            $featureBlock
-                           );
+        if ($filterableFeatures) {                
+            foreach ($filterableFeatures as $feature) {
+                $this->filterableFeatures[] = $feature;
+                $featureBlock = $this->getLayout()->createBlock($filterBlockName)
+                        ->setLayer($this->getLayer())
+                        ->setAttributeModel($feature)
+                        ->init();
+                $this->setChild('feature_' . $feature['feature_id'] . '_filter',
+                                $featureBlock
+                               );
+            }
         }
 /* ------------ */
         return parent::_prepareLayout();

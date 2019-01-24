@@ -21,11 +21,14 @@ class Bintime_Sinchimport_Model_Product extends Mage_Catalog_Model_Product
       $entity_id=$this->getEntityId();
       $sinch=Mage::getModel('sinchimport/sinch');
       $sinch->loadGalleryPhotos($this->getEntityId());
-      $gallery_photos=$sinch->getGalleryPhotos(); 
-      if(is_array($gallery_photos)){  
+      $gallery_photos=$sinch->getGalleryPhotos();
+
+      # Moe - Uche : changed if(is_array($gallery_photos)) to if(count($gallery_photos)) and changed $image['file']=$photo['thumb']; to $image['file']=$photo['pic']
+      # Reason: show multiple images for our product and their product page with multiple images only showed blurry thumbnails
+      if(count($gallery_photos)){  
         $images = new Varien_Data_Collection();
         foreach($gallery_photos as $photo){
-                $image['file']=$photo['thumb'];
+                $image['file']=$photo['pic'];
                 $image['url']=$photo['pic'];
                 $images->addItem(new Varien_Object($image));
         }

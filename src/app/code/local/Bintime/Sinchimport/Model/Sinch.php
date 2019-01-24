@@ -1,5 +1,5 @@
 <?php
-ini_set('memory_limit', '256M');
+ini_set('memory_limit', '768M'); # Moe : Increased memory limit from 256M to 768M
 $dir = Mage::getBaseDir('code') . "/local/Bintime/Sinchimport/Model";
 require_once($dir . '/config.php');
 
@@ -13,7 +13,7 @@ class Bintime_Sinchimport_Model_Sinch extends Mage_Core_Model_Abstract
         $attributes,
         $db,
         $lang_id,
-        $debug_mode = 1;
+        $debug_mode = 0;
     public $php_run_string;
     public $php_run_strings;
     public $price_breaks_filter;
@@ -157,7 +157,7 @@ class Bintime_Sinchimport_Model_Sinch extends Mage_Core_Model_Abstract
 
         $this->_LOG("Finish import from cron");
     }
-
+    
     function run_sinch_import()
     {
         $this->_categoryMetaTitleAttrId = $this->_getCategoryAttributeId('meta_title');
@@ -302,7 +302,7 @@ class Bintime_Sinchimport_Model_Sinch extends Mage_Core_Model_Abstract
                 $this->db_do($q);
 
                 $ftpCred = Mage::getStoreConfig('sinchimport_root/sinch_ftp');
-                Mage::dispatchEvent('sinch_import_after', array('ftp_cred' => $ftpCred));
+                Mage::dispatchEvent('sinch_import_after', array('ftp_cred' => $ftpCred, 'full_import' => true));
             } catch (Exception $e) {
                 $this->set_import_error_reporting_message($e);
             }
@@ -1759,7 +1759,8 @@ class Bintime_Sinchimport_Model_Sinch extends Mage_Core_Model_Abstract
             $this->db_do($q);
         }
 
-        $this->delete_old_sinch_categories_from_shop();
+        // Ayman : Keep old sinch categories
+        // $this->delete_old_sinch_categories_from_shop();
 
         $this->db_do("DROP TABLE IF EXISTS $stINch_categories");
         $this->db_do("RENAME TABLE $categories_temp TO $stINch_categories");
@@ -2696,7 +2697,8 @@ class Bintime_Sinchimport_Model_Sinch extends Mage_Core_Model_Abstract
 
         }
 
-        $this->delete_old_sinch_categories_from_shop();
+        // Ayman : Keep old sinch categories
+        // $this->delete_old_sinch_categories_from_shop();
         $this->db_do("DROP TABLE IF EXISTS $stINch_categories\n\n");
         $this->db_do("RENAME TABLE $categories_temp TO $stINch_categories");
     }
@@ -3642,25 +3644,27 @@ WHERE cce.entity_id NOT IN
                           LINES TERMINATED BY \"\r\n\"
                           IGNORE 1 LINES ");
 
-            $q = "DELETE aov
-                FROM " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option') . " ao
-                JOIN " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option_value') . " aov
-                    ON ao.option_id=aov.option_id left
-                JOIN " . Mage::getSingleton('core/resource')->getTableName('manufacturers_temp') . " mt
-                    ON aov.value=mt.manufacturer_name
-                WHERE
-                    ao.attribute_id=" . $this->attributes['manufacturer'] . " AND
-                    mt.manufacturer_name is null";
-            $this->db_do($q);
+            # Moe - Uche : Original code commented out
+            # Reason: to prevent deleting our manufacturer values from the manufacturer attribute
+            // $q = "DELETE aov
+            //     FROM " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option') . " ao
+            //     JOIN " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option_value') . " aov
+            //         ON ao.option_id=aov.option_id left
+            //     JOIN " . Mage::getSingleton('core/resource')->getTableName('manufacturers_temp') . " mt
+            //         ON aov.value=mt.manufacturer_name
+            //     WHERE
+            //         ao.attribute_id=" . $this->attributes['manufacturer'] . " AND
+            //         mt.manufacturer_name is null";
+            // $this->db_do($q);
 
-            $q = "DELETE ao
-                FROM " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option') . " ao
-                LEFT JOIN " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option_value') . " aov
-                    ON ao.option_id=aov.option_id
-                WHERE
-                    attribute_id=" . $this->attributes['manufacturer'] . " AND
-                    aov.option_id is null";
-            $this->db_do($q);
+            // $q = "DELETE ao
+            //     FROM " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option') . " ao
+            //     LEFT JOIN " . Mage::getSingleton('core/resource')->getTableName('eav_attribute_option_value') . " aov
+            //         ON ao.option_id=aov.option_id
+            //     WHERE
+            //         attribute_id=" . $this->attributes['manufacturer'] . " AND
+            //         aov.option_id is null";
+            // $this->db_do($q);
 
             $q = "SELECT
                     m.sinch_manufacturer_id,
@@ -4133,13 +4137,15 @@ WHERE cce.entity_id NOT IN
 
     function addManufacturers($delete_eav = null)
     {
-        // this cleanup is not needed due to foreign keys
-        if (!$delete_eav) {
-            $result = $this->db_do("
-                                    DELETE FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_index_eav') . "
-                                    WHERE attribute_id = " . $this->_getProductAttributeId('manufacturer')
-            );
-        }
+        # Moe - Uche : Original code commented out
+        # Reason: to make sure manufacturer value is not made blank for our products
+        // // this cleanup is not needed due to foreign keys
+        // if (!$delete_eav) {
+        //     $result = $this->db_do("
+        //                             DELETE FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_index_eav') . "
+        //                             WHERE attribute_id = " . $this->_getProductAttributeId('manufacturer')
+        //     );
+        // }
         $this->addManufacturer_attribute();
 
         $result = $this->db_do("
@@ -4200,6 +4206,8 @@ WHERE cce.entity_id NOT IN
 
     private function addManufacturer_attribute()
     {
+        # Moe - Uche : changed: value = pm.manufacturer_option_id --> value = IFNULL(pm.manufacturer_option_id, value)
+        # Reason: to prevent our out of stock products manufacturer attribute value going blank
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity_int') . " (
                                     entity_type_id,
@@ -4219,7 +4227,7 @@ WHERE cce.entity_id NOT IN
                                     ON a.entity_id = pm.entity_id
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                    value = pm.manufacturer_option_id
+                                    value = IFNULL(pm.manufacturer_option_id, value)
                               ");
     }
 
@@ -4333,6 +4341,8 @@ WHERE cce.entity_id NOT IN
                                  ON DUPLICATE KEY UPDATE
                                     value=1
                               ");
+        # Moe : Changed value=1 to value=value
+        # Reason: So our products status does not get changed
         // set status = 1 for all stores
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity_int') . " (
@@ -4350,7 +4360,7 @@ WHERE cce.entity_id NOT IN
                                   FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity') . " a
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                    value=1
+                                    value=value
                               ");
 
         //Unifying products with categories.
@@ -4434,13 +4444,15 @@ WHERE cce.entity_id NOT IN
         $result = $this->db_do("DELETE FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . "_for_delete_temp
                                 WHERE category_id=new_category_id");
 
-        $result = $this->db_do("
-                                DELETE ccp
-                                FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . " ccp
-                                JOIN " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . "_for_delete_temp ccpfd
-                                    ON ccp.product_id=ccpfd.product_id
-                                    AND ccp.category_id=ccpfd.category_id
-                              ");
+        # Moe : Commented below block out
+        # Reason: So does not remove existing selected categories
+        // $result = $this->db_do("
+        //                         DELETE ccp
+        //                         FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . " ccp
+        //                         JOIN " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . "_for_delete_temp ccpfd
+        //                             ON ccp.product_id=ccpfd.product_id
+        //                             AND ccp.category_id=ccpfd.category_id
+        //                       ");
 
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_category_product') . " (
@@ -4648,7 +4660,8 @@ WHERE cce.entity_id NOT IN
                                     visibility = 4
                               ");
 
-
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity_int') . " (
                                     entity_type_id,
@@ -4668,9 +4681,10 @@ WHERE cce.entity_id NOT IN
                                   ON a.store_product_id=w.store_product_id
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                value = 4
-                              ");
-
+                                value = value
+                              "); #1
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity_int') . " (
                                     entity_type_id,
@@ -4688,8 +4702,8 @@ WHERE cce.entity_id NOT IN
                                   FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity') . " a
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                    value = 4
-                              ");
+                                    value = value
+                              "); #2
 
         $result = $this->db_do("DELETE cpw
                                 FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_website') . " cpw
@@ -5171,6 +5185,9 @@ STP DELETE*/
 
     function addWeight()
     {
+        $mult = 0.001;
+        # Moe - Uche : changed b.Weight to b.Weight*{$mult}
+        # Reason: Website and other platform uses kilograms, so here we convert grams to kilograms
         // product weight for specific web site
         $result = $this->db_do("
                                 INSERT INTO " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity_decimal') . " (
@@ -5185,7 +5202,7 @@ STP DELETE*/
                                     " . $this->_getProductAttributeId('weight') . ",
                                     w.website,
                                     a.entity_id,
-                                    b.Weight
+                                    b.Weight*{$mult}
                                   FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity') . " a
                                   INNER JOIN " . Mage::getSingleton('core/resource')->getTableName('products_temp') . " b
                                     ON a.store_product_id = b.store_product_id
@@ -5193,7 +5210,7 @@ STP DELETE*/
                                     ON a.store_product_id=w.store_product_id
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                    value = b.Weight
+                                    value = b.Weight*{$mult}
                               ");
         // product weight for all web sites
         $result = $this->db_do("
@@ -5209,13 +5226,13 @@ STP DELETE*/
                                     " . $this->_getProductAttributeId('weight') . ",
                                     0,
                                     a.entity_id,
-                                    b.Weight
+                                    b.Weight*{$mult}
                                   FROM " . Mage::getSingleton('core/resource')->getTableName('catalog_product_entity') . " a
                                   INNER JOIN " . Mage::getSingleton('core/resource')->getTableName('products_temp') . " b
                                     ON a.store_product_id = b.store_product_id
                                 )
                                 ON DUPLICATE KEY UPDATE
-                                    value = b.Weight
+                                    value = b.Weight*{$mult}
 
 
                               ");
@@ -6197,7 +6214,8 @@ FROM $catalog_category_entity
                 visibility = 4");
 
         Mage::log("\n     replaceMagentoProductsMultistore 24\n", null, "importstatus.log");
-
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
             INSERT INTO $catalog_product_entity_int
                 (entity_type_id, attribute_id, store_id, entity_id, value)
@@ -6212,10 +6230,11 @@ FROM $catalog_category_entity
                 ON a.store_product_id = w.store_product_id
             )
             ON DUPLICATE KEY UPDATE
-                value = 4");
+                value = value"); #3
 
         Mage::log("\n     replaceMagentoProductsMultistore 25\n", null, "importstatus.log");
-
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
             INSERT INTO $catalog_product_entity_int
                 (entity_type_id,  attribute_id, store_id, entity_id, value)
@@ -6228,7 +6247,7 @@ FROM $catalog_category_entity
             FROM $catalog_product_entity a
             )
             ON DUPLICATE KEY UPDATE
-                value = 4");
+                value = value");#4
 
         Mage::log("\n     replaceMagentoProductsMultistore 26\n", null, "importstatus.log");
 
@@ -6829,7 +6848,8 @@ JOIN $stINch_products sp
                 visibility = 4");
 
         Mage::log("\n     replaceMagentoProductsMultistoreMERGE 24\n", null, "importstatus.log");
-
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
             INSERT INTO $catalog_product_entity_int
                 (entity_type_id, attribute_id, store_id, entity_id, value)
@@ -6844,10 +6864,11 @@ JOIN $stINch_products sp
                 ON a.store_product_id = w.store_product_id
             )
             ON DUPLICATE KEY UPDATE
-                value = 4");
+                value = value"); #5
 
         Mage::log("\n     replaceMagentoProductsMultistoreMERGE 25\n", null, "importstatus.log");
-
+        # Uche : Changed value = 4 to value = value on duplicate
+        # Reason : To maintain product visibility value or our items
         $result = $this->db_do("
             INSERT INTO $catalog_product_entity_int
                 (entity_type_id,  attribute_id, store_id, entity_id, value)
@@ -6860,7 +6881,7 @@ JOIN $stINch_products sp
             FROM $catalog_product_entity a
             )
             ON DUPLICATE KEY UPDATE
-                value = 4");
+                value = value"); #6
 
         Mage::log("\n     replaceMagentoProductsMultistoreMERGE 26\n", null, "importstatus.log");
 
@@ -7551,15 +7572,39 @@ JOIN $stINch_products sp
 
     function cron_start_full_import()
     {
-        $this->import_run_type = 'CRON';
-        $this->run_sinch_import();
+        # Moe - Uche : Using same method as AjaxController to execute import
+        # Reason: Cron dies when executing addAttributeToFilter() function
+        // $this->import_run_type = 'CRON';
+        // $this->run_sinch_import();
+
+        $dir = dirname(__FILE__);
+        $php_run_string_array = explode(';', $this->php_run_strings);
+        foreach($php_run_string_array as $php_run_string){
+            exec("nohup ".$php_run_string." ".$dir."/../sinch_import_start_ajax.php > /dev/null & echo $!", $out);
+            sleep(1);
+            if (($out[0] > 0) && !$this->is_imort_not_run()){
+                break;
+            }
+        }
     }
 
 
     function cron_start_stock_price_import()
     {
-        $this->import_run_type = 'CRON';
-        $this->run_stock_price_sinch_import();
+        # Moe - Uche : Using same method as AjaxController to execute import
+        # Reason: Cron dies when executing addAttributeToFilter() function
+        // $this->import_run_type = 'CRON';
+        // $this->run_stock_price_sinch_import();
+
+        $dir = dirname(__FILE__);
+        $php_run_string_array = explode(';', $this->php_run_strings);
+        foreach($php_run_string_array as $php_run_string){
+            exec("nohup ".$php_run_string." ".$dir."/../stock_price_sinch_import_start_ajax.php > /dev/null & echo $!", $out);
+            sleep(1);
+            if (($out[0] > 0) && !$this->is_imort_not_run()){
+                break;
+            }
+        }
     }
 
     function run_stock_price_sinch_import()
@@ -7602,12 +7647,23 @@ JOIN $stINch_products sp
                 $import->addImportStatus('Stock Price Start Import');
                 Mage::log("Upload Files\n", null, "importstatus.log");
                 $this->files = array(
+                    FILE_DISTRIBUTORS,
+                    FILE_DISTRIBUTORS_STOCK_AND_PRICES,
                     FILE_STOCK_AND_PRICES,
-                    FILE_PRICE_RULES
+                    FILE_PRICE_RULES,
+                    FILE_PRODUCT_CONTRACTS
                 );
 
                 $import->UploadFiles();
                 $import->addImportStatus('Stock Price Upload Files');
+
+                Mage::log("Parse Distributors\n", null, "importstatus.log");
+                $import->ParseDistributors();
+                if ($this->product_file_format == "NEW") {
+                    $this->ParseDistributorsStockAndPrice();
+                    $this->ParseProductContracts();
+                }
+                $import->addImportStatus('Parse Distributors');
 
                 Mage::log("Parse Stock And Prices\n", null, "importstatus.log");
                 $import->ParseStockAndPrices();
@@ -7625,6 +7681,7 @@ JOIN $stINch_products sp
                 Mage::log("Start indexing  Stock & Price\n", null, "importstatus.log");
                 $import->_cleanCateoryProductFlatTable();
                 $import->runStockPriceIndexer();
+
                 Mage::log("Finish indexing  Stock & Price", null, $this->_logFile);
                 $import->addImportStatus('Stock Price Indexing data');
                 $import->addImportStatus('Stock Price Finish import', 1);
@@ -7634,7 +7691,7 @@ JOIN $stINch_products sp
                 $this->db_do($q);
 
                 $ftpCred = Mage::getStoreConfig('sinchimport_root/sinch_ftp');
-                Mage::dispatchEvent('sinch_import_after', array('ftp_cred' => $ftpCred));
+                Mage::dispatchEvent('sinch_import_after', array('ftp_cred' => $ftpCred, 'full_import' => false));
             } catch (Exception $e) {
                 $this->set_import_error_reporting_message($e);
             }
@@ -9045,20 +9102,23 @@ JOIN $stINch_products sp
                 </thead>
                 <tbody>';
         $i = 1;
-        foreach ($distributors_stock_price as $offer) {
-            if ($i > 0) {
-                $class = "even pointer";
-                $i = 0;
-            } else {
-                $class = "pointer";
-                $i = 1;
-            }
-            $distributors_table .= '
-                  <tr class="' . $class . '">
-                        <td nowrap  style="font-weight: normal">' . $offer['distributor_name'] . '</td>
-                        <td style="font-weight: normal">' . $offer['stock'] . '</td>
-                        <td style="font-weight: normal">' . Mage::helper('core')->currency($offer['cost']) . '</td>
-                   </tr>';
+        # Moe : added if loop around the foreach to check if distributors stock price exists
+        if ($distributors_stock_price) {
+            foreach ($distributors_stock_price as $offer) {
+                if ($i > 0) {
+                    $class = "even pointer";
+                    $i = 0;
+                } else {
+                    $class = "pointer";
+                    $i = 1;
+                }
+                $distributors_table .= '
+                      <tr class="' . $class . '">
+                            <td nowrap  style="font-weight: normal">' . $offer['distributor_name'] . '</td>
+                            <td style="font-weight: normal">' . $offer['stock'] . '</td>
+                            <td style="font-weight: normal">' . Mage::helper('core')->currency($offer['cost']) . '</td>
+                       </tr>';
+            }            
         }
         $distributors_table .= '
                 </tbody>

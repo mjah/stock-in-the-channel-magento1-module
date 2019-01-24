@@ -6,7 +6,7 @@ class Bintime_Sinchimport_IndexController extends Mage_Adminhtml_Controller_Acti
 
     public function indexAction(){
         $this->_logFile = "Sinch.log";
-        Mage::log("Start Sinch import", null, $this->_logFile);
+        Mage::log("Start Sinch import [IndexController.php]", null, $this->_logFile);
         $this->getResponse()->appendBody("Start import <br>");
 
         $import = Mage::getModel('sinchimport/sinch');
