@@ -3851,7 +3851,7 @@ WHERE cce.entity_id NOT IN
                              Family varchar(255),
                              Reviews varchar(255),
                              pdf_url varchar(512),
-                             product_short_description varchar(255),
+                             product_short_description text,
                              products_date_added datetime default NULL,
                              products_last_modified datetime default NULL,
                              availability_id_in_stock int(11) default '1',
